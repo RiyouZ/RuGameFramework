@@ -26,7 +26,7 @@ namespace RuAI.HTN
 		protected IMethodBuilder _parent;
 		public IMethodBuilder Parent => _parent;
 
-		BaseTask IMethodBuilderChild.MethodChildTask => Task;
+		IHTNTask IMethodBuilderChild.MethodChildTask => Task;
 
 		public PrimitiveBuilder (IMethodBuilder parent, string name, Agent agent)
 		{
@@ -44,7 +44,7 @@ namespace RuAI.HTN
 			return this;
 		}
 
-		public PrimitiveBuilder<T> Run (Func<HTNRunner.RunnerContext, IEnumerator> func)
+		public PrimitiveBuilder<T> Run (Action<HTNRunner.RunnerContext, PrimitiveTask> func)
 		{
 			Task.Do = func;
 			return this;

@@ -6,6 +6,7 @@ namespace RuAI.HTN
 {
 	public enum TaskStatus
 	{
+		None,
 		Success,
 		Running,
 		Failure
@@ -24,11 +25,9 @@ namespace RuAI.HTN
 		{
 			get;
 		}
+		public void Initialize (IHTNTask parent);
 
 		public bool Condition(Dictionary<string, WorldSensor> worldState);
-
-		// ¹æ»®
-		public void Plan (Dictionary<string, WorldSensor> worldState);
 	}
 }
 

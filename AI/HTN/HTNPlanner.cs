@@ -14,7 +14,7 @@ namespace RuAI.HTN
 			public Dictionary<string, WorldSensor> worldState;
 			public int resultCount;
 			public int taskCount;
-			// ´ı´¦ÀíµÄÈÎÎñ
+			// å¾…å¤„ç†çš„ä»»åŠ¡
 			public int waitTaskCount;
 
 			public BackTrackContext (CompoundTask task, Dictionary<string, WorldSensor> worldState, int resultCount, int taskCount, int waitCount)
@@ -27,11 +27,11 @@ namespace RuAI.HTN
 			}
 		}
 
-		// ¸ùÈÎÎñ
+		// æ ¹ä»»åŠ¡
 		private CompoundTask _rootTask;
 		private Stack<PrimitiveTask> _taskResult;
 		private Stack<IHTNTask> _taskStack;
-		// ²Ù×÷»ØÍËÕ»
+		// æ“ä½œå›é€€æ ˆ
 		private Stack<BackTrackContext> _backStack;
 
         public HTNPlanner(CompoundTask rootTask)
@@ -60,10 +60,10 @@ namespace RuAI.HTN
 				var task = _taskStack.Pop();
 				if (task is CompoundTask cpdTask)
 				{
-					// È«²¿ÎŞ·¨Ö´ĞĞ
+					// å…¨éƒ¨æ— æ³•æ‰§è¡Œ
 					if (!cpdTask.Condition(copyWorldState))
 					{
-						// »ØÍËÊ§°Ü
+						// å›é€€å¤±è´¥
 						if (!BackTrack(ref copyWorldState))
 						{
 							return null;
@@ -71,7 +71,7 @@ namespace RuAI.HTN
 						continue;
 					}
 
-					// ±£´æ×´Ì¬
+					// ä¿å­˜çŠ¶æ€
 					BackTrackContext backCtx = new BackTrackContext(cpdTask, HTNSensors.CloneWorldState(copyWorldState), _taskResult.Count, _taskStack.Count, cpdTask.CurrentMethod.subTask.Count);
 					_backStack.Push(backCtx);
 
@@ -83,10 +83,10 @@ namespace RuAI.HTN
 				}
 				else if (task is PrimitiveTask primitiveTask)
 				{
-					// Ìõ¼şÊ§°Ü
+					// æ¡ä»¶å¤±è´¥
 					if (!primitiveTask.Condition(copyWorldState))
 					{
-						// »ØÍËÊ§°Ü
+						// å›é€€å¤±è´¥
 						if (!BackTrack(ref copyWorldState))
 						{
 							return null;
@@ -94,15 +94,15 @@ namespace RuAI.HTN
 						continue;
 					}
 
-					// Èç¹ûÈ«²¿´¦Àí³É¹¦ ÔòÍËµô»ØÍËÕ»µÄÕ»¶¥
+					// å¦‚æœå…¨éƒ¨å¤„ç†æˆåŠŸ åˆ™é€€æ‰å›é€€æ ˆçš„æ ˆé¡¶
 					if (_backStack.Count > 0)
 					{
 						var ctx = _backStack.Peek();
 						
-						// ´ı´¦ÀíÈÎÎñ
+						// å¾…å¤„ç†ä»»åŠ¡
 						ctx.waitTaskCount--;
 
-						// // ¸ÃCompoundÒÑ¾­³É¹¦Íê³É ÉÏÒ»¸öµÄ´ı´¦ÀíÈÎÎñÊı - 1
+						// // è¯¥Compoundå·²ç»æˆåŠŸå®Œæˆ ä¸Šä¸€ä¸ªçš„å¾…å¤„ç†ä»»åŠ¡æ•° - 1
 						while(_backStack.Count > 0 && _backStack.Peek().waitTaskCount <= 0)
 						{
 							_backStack.Pop();
@@ -128,30 +128,30 @@ namespace RuAI.HTN
 
 		private bool BackTrack (ref Dictionary<string, WorldSensor> worldState)
 		{
-			// Ã»ÓĞ¿ÉÒÔ»ØÍËµÄTask ¹æ»®Ê§°Ü
+			// æ²¡æœ‰å¯ä»¥å›é€€çš„Task è§„åˆ’å¤±è´¥
 			if (_backStack.Count <= 0)
 			{
 				return false;
 			}
 
-			// »ØÍËµÄÊ±ºò Çå³ıµôÒÑ¾­´¦Àí¹ıµÄÈÎÎñ
+			// å›é€€çš„æ—¶å€™ æ¸…é™¤æ‰å·²ç»å¤„ç†è¿‡çš„ä»»åŠ¡
 			while (_backStack.Count > 0 && _backStack.Peek().waitTaskCount <= 0)
 			{
 				_backStack.Pop();
 			}
 
-			// È«²¿Çå¿ÕÔòÃ»ÓĞ¿ÉÒÔ»ØÍËÏî
+			// å…¨éƒ¨æ¸…ç©ºåˆ™æ²¡æœ‰å¯ä»¥å›é€€é¡¹
 			if (_backStack.Count <= 0)
 			{
 				return false;
 			}
 
-			// »ØËİ
+			// å›æº¯
 			var context = _backStack.Pop();
-			// »ØËİ×´Ì¬ ĞèÒªĞŞ¸ÄÍâ²¿ÒıÓÃ
+			// å›æº¯çŠ¶æ€ éœ€è¦ä¿®æ”¹å¤–éƒ¨å¼•ç”¨
 			worldState = context.worldState;
 
-			// »ØËİÈÎÎñ
+			// å›æº¯ä»»åŠ¡
 			while (_taskResult.Count > context.resultCount)
 			{
 				_taskResult.Pop();
@@ -162,9 +162,9 @@ namespace RuAI.HTN
 				_taskStack.Pop();
 			}
 
-			// Ñ¡Ôñ»ØËİµ½ÉÏÒ»¸öÈÎÎñµÄÑ¡Ôñ
+			// é€‰æ‹©å›æº¯åˆ°ä¸Šä¸€ä¸ªä»»åŠ¡çš„é€‰æ‹©
 			context.task.CurrentMethodIndex++;
-			// ÖØĞÂ·Ö½â
+			// é‡æ–°åˆ†è§£
 			_taskStack.Push(context.task);
 			return true;
 		}

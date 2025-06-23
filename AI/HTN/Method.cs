@@ -1,3 +1,4 @@
+using Sirenix.OdinInspector;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ namespace RuAI.HTN
 {
 	public class Method : BaseTask
 	{
+		[InlineEditor]
 		public List<BaseTask> subTask = new List<BaseTask>();
 
 		public static Method Create (string name, Agent agent, Func<Dictionary<string, WorldSensor>, bool> condition, List<BaseTask> subTasks)
@@ -31,9 +33,18 @@ namespace RuAI.HTN
 			return method;
 		}
 
-		public void AddSubTask (BaseTask task)
+		public override void Initialize (IHTNTask parent)
 		{
-			subTask.Add(task);
+			this.parent = parent as BaseTask;
+			foreach (var task in subTask)
+			{
+				task.Initialize(this);
+			}
+		}
+
+		public void AddSubTask (IHTNTask task)
+		{
+			subTask.Add(task as BaseTask);
 		}
 	}
 

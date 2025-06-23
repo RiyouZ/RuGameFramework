@@ -1,3 +1,5 @@
+using Sirenix.OdinInspector;
+using Sirenix.Serialization;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -8,6 +10,7 @@ namespace RuAI.HTN
 {
 	public class CompoundTask : BaseTask
 	{
+		[InlineEditor]
 		public List<Method> methodList = new List<Method>();
 		public Method CurrentMethod
 		{
@@ -19,6 +22,7 @@ namespace RuAI.HTN
 			get; set;
 		}
 
+		// ç»§æ‰¿SOç±»åˆ›å»º
 		public static T Create<T> (string name, Agent agent) where T : CompoundTask
 		{
 			var task = CreateInstance<T>();
@@ -39,12 +43,31 @@ namespace RuAI.HTN
 		{
 			return Create<CompoundTask>(name, agent);
 		}
-		
-		// ¸´ºÏÈÎÎñÑ¡ÔñÌõ¼ş
+
+		public override void Initialize (IHTNTask parent)
+		{
+			this.parent = parent as BaseTask;
+			foreach (var method in methodList)
+			{
+				method.Initialize(this);
+			}
+		}
+
+		// ä½œä¸ºrootèŠ‚ç‚¹ ç›´æ¥è®¾ç½®Agent
+		public void InitializeAgent (Agent agent)
+		{
+			this.CharacterAgent = agent;
+			foreach (var method in methodList)
+			{
+				method.Initialize(this);
+			}
+		}
+
+		// å¤åˆä»»åŠ¡é€‰æ‹©æ¡ä»¶
 		public override bool Condition (Dictionary<string, WorldSensor> worldState)
 		{
 			var copyWorldState = HTNSensors.CloneWorldState(worldState);
-			// Èç¹û×ÓÊ§°Ü Ôò´ÓÉÏÒ»´Î³É¹¦µÄµØ·½¿ªÊ¼µü´ú
+			// å¦‚æœå­å¤±è´¥ åˆ™ä»ä¸Šä¸€æ¬¡æˆåŠŸçš„åœ°æ–¹å¼€å§‹è¿­ä»£
 			for (int i = CurrentMethodIndex; i < methodList.Count; i++)
 			{
 				var method = methodList[i];

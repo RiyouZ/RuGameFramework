@@ -10,8 +10,8 @@ namespace RuAI.HTN
 	public class PrimitiveTask : BaseTask
 	{
 		protected Action<Dictionary<string, WorldSensor>> _effect;
-		protected Func<HTNRunner.RunnerContext, IEnumerator> _run;
-		public Func<HTNRunner.RunnerContext, IEnumerator> Do
+		protected Action<HTNRunner.RunnerContext, PrimitiveTask> _run;
+		public Action<HTNRunner.RunnerContext, PrimitiveTask> Do
 		{
 			set => _run = value;
 		}
@@ -44,15 +44,18 @@ namespace RuAI.HTN
 			return Create<PrimitiveTask>(name, agent);
 		}
 
+		public override void Initialize (IHTNTask parent)
+		{
+			this.parent = parent as BaseTask;
+		}
+
 		// 规划时 
-		public override void Plan (Dictionary<string, WorldSensor> worldState)
+		public virtual void Plan (Dictionary<string, WorldSensor> worldState)
 		{
 			ApplyEffect(worldState);
 		}
 
-
 		// 运行时
-
 		public IEnumerator Run (HTNRunner.RunnerContext ctx)
 		{
 			yield return OnRunStart(ctx);
@@ -71,7 +74,8 @@ namespace RuAI.HTN
 
 		protected virtual IEnumerator OnRun (HTNRunner.RunnerContext ctx)
 		{
-			yield return _run?.Invoke(ctx);
+			_run?.Invoke(ctx, this);
+			yield return null;
 		}
 
 		protected virtual IEnumerator OnRunEnd (HTNRunner.RunnerContext ctx)

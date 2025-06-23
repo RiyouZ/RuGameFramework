@@ -34,7 +34,7 @@ namespace RuAI.HTN
 		}
 
 		IMethodBuilder IMethodBuilderChild.Parent => _parent;
-		BaseTask IMethodBuilderChild.MethodChildTask => Task;
+		IHTNTask IMethodBuilderChild.MethodChildTask => Task;
 
 		protected IMethodBuilder _currentMethod;
 

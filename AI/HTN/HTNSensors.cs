@@ -46,6 +46,16 @@ namespace RuAI.HTN
 
 		public static Dictionary<string, WorldSensor> WorldState => _worldState;
 
+		public static void AddSensor (IAIAgent agent, string id, WorldSensor sensor)
+		{
+			if (_worldState.ContainsKey(id))
+			{
+				return;
+			}
+
+			_worldState.Add(id, sensor);
+			agent.LocalWorldState.Add(id, sensor);
+		}
 
 		public static Dictionary<string, WorldSensor> CloneWorldState (Dictionary<string, WorldSensor> origin)
 		{

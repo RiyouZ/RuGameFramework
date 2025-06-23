@@ -13,7 +13,7 @@ namespace RuAI.HTN
 			get;
 		}
 		 
-		public BaseTask MethodChildTask
+		public IHTNTask MethodChildTask
 		{
 			get;
 		}

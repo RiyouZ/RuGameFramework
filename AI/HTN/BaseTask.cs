@@ -1,3 +1,5 @@
+using Sirenix.OdinInspector;
+using Sirenix.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,14 +7,31 @@ using UnityEngine;
 
 namespace RuAI.HTN
 {
-	public abstract class BaseTask : ScriptableObject, IHTNTask
+	public abstract class BaseTask : ScriptableObject, ISerializationCallbackReceiver, IHTNTask
 	{
+		[SerializeField, HideInInspector]
+		private SerializationData serializationData = new SerializationData();
+
+		protected BaseTask parent;
+
 		public string taskName;
 		public string TaskName => taskName;
 
+		private Agent _agent;
 		public Agent CharacterAgent
 		{
-			get; set;
+			get
+			{
+				if (_agent == null && parent != null)
+				{
+					_agent = parent.CharacterAgent;
+				}
+				return _agent;
+			}
+			set
+			{
+				_agent = value;
+			}
 		}
 
 		public TaskStatus Status
@@ -20,41 +39,52 @@ namespace RuAI.HTN
 			get; private set;
 		}
 
-		// ”Î‘ÀÀ„
-		protected List<IAICondition> _conditions = new List<IAICondition>();
+		// ‰∏éËøêÁÆó
+		[ShowInInspector]
+		protected List<ScriptableCondition> conditions = new List<ScriptableCondition>();
 
-		public void AddCondition (IAICondition condition)
+		public void AddCondition (ScriptableCondition condition)
 		{
-			if (_conditions == null)
+			if (conditions == null)
 			{
-				_conditions = new List<IAICondition>();
+				conditions = new List<ScriptableCondition>();
 			}
 
-			_conditions.Add(condition);
+			conditions.Add(condition as ScriptableCondition);
 		}
 
 		public void AddCondition (Func<Dictionary<string, WorldSensor>, bool> func)
 		{
 			var condition = ScriptableObject.CreateInstance<AnoCondition>();
 			condition.SetCondition(func);
-			_conditions.Add(condition);
+			conditions.Add(condition);
 		}
 
-		// ≈–∂œÃıº˛ πÊªÆ/‘À––
+		// Âà§Êñ≠Êù°‰ª∂ ËßÑÂàí/ËøêË°å
 		public virtual bool Condition (Dictionary<string, WorldSensor> worldState)
 		{
-			foreach (var condition in _conditions)
+			foreach (var condition in conditions)
 			{
 				if (!condition.IsTrue(worldState))
 				{
 					return false;
 				}
 			}
+
 			return true;
 		}
-		public virtual void Plan (Dictionary<string, WorldSensor> worldState) { }
 
-		public virtual IEnumerator Run () {yield return null;}
+		public void OnBeforeSerialize ()
+		{
+			UnitySerializationUtility.SerializeUnityObject(this, ref serializationData);
+		}
+
+		public void OnAfterDeserialize ()
+		{
+			UnitySerializationUtility.DeserializeUnityObject(this, ref serializationData);
+		}
+
+		public virtual void Initialize (IHTNTask parent) { }
 	}
 
 }

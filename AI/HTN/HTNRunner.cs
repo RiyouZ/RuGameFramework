@@ -9,24 +9,27 @@ namespace RuAI.HTN
 {
 	public class HTNRunner 
 	{
-		// ÔËĞĞÊ±´«µİµÄĞÅÏ¢
+		// è¿è¡Œæ—¶ä¼ é€’çš„ä¿¡æ¯
 		public class RunnerContext
 		{
 			public TaskStatus status;
-			// ÊÀ½çµÄ×´Ì¬ ²¢·Ç×ÔÉíÖ÷¹ÛÊÓ½Ç Ö÷¹ÛÊÓ½Ç×´Ì¬ÓÉAgent¹ÜÀí
+			// ä¸–ç•Œçš„çŠ¶æ€ å¹¶éè‡ªèº«ä¸»è§‚è§†è§’ ä¸»è§‚è§†è§’çŠ¶æ€ç”±Agentç®¡ç†
 			public Dictionary<string, WorldSensor> worldState;
 		}
 
 		private RunnerContext _ctx;
 		
 		public TaskStatus Status => _ctx.status;
-		private List<PrimitiveTask> _currentTaskList;
 		public MonoBehaviour _runner;
 		private Coroutine _asyncRunHandle = null;
+
+		private bool _waitStop = false;
+
 		public HTNRunner (MonoBehaviour runner, Dictionary<string, WorldSensor> worldState)
 		{
 			_ctx = new RunnerContext ();
 			_runner = runner;
+			_ctx.status = TaskStatus.None;
 			_ctx.worldState = worldState;
 		}
 
@@ -35,52 +38,80 @@ namespace RuAI.HTN
 			set; private get;
 		}
 
-		public Action OnTaskRunEnd
+		public Action<TaskStatus> OnTaskRunEnd
 		{
 			set; private get;
 		}
 
 		public void Execute (List<PrimitiveTask> taskList)
 		{
-			if (_currentTaskList == null)
-			{
-				_currentTaskList = taskList;
-			}
-
 			if (_asyncRunHandle != null)
 			{
 				return;
 			}
 
-			_asyncRunHandle = _runner.StartCoroutine(AsyncRunning(_currentTaskList));
+			_asyncRunHandle = _runner.StartCoroutine(AsyncRunning(taskList));
+		}
+
+		public void Reset ()
+		{
+			_ctx.status = TaskStatus.None;
+		}
+
+		public void Stop (bool force = false)
+		{
+			if (_asyncRunHandle != null && force)
+			{
+				_runner.StopCoroutine(_asyncRunHandle);
+				_asyncRunHandle = null;
+				return;
+			}
+
+			_waitStop = true;
 		}
 
 		private IEnumerator AsyncRunning (List<PrimitiveTask> taskList)
 		{
-			// Ö´ĞĞ
+			if (taskList == null)
+			{
+				yield break;
+			}
+
+			// æ‰§è¡Œ
 			_ctx.status = TaskStatus.Running;
+			OnTaskRunStart?.Invoke();
 			foreach (var task in taskList)
 			{
-				// ÒòÌõ¼şÖ´ĞĞÊ§°Ü
+				// å› æ¡ä»¶æ‰§è¡Œå¤±è´¥
 				if (!task.Condition(_ctx.worldState))
 				{
 					_ctx.status = TaskStatus.Failure;
+					OnTaskRunEnd?.Invoke(_ctx.status);
 					_runner.StopCoroutine(_asyncRunHandle);
 					_asyncRunHandle = null;
 					yield break;
 				}
 
 				yield return task.Run(_ctx);
+				// æ‰§è¡Œå¤±è´¥
 				if (_ctx.status == TaskStatus.Failure)
 				{
+					OnTaskRunEnd?.Invoke(_ctx.status);
 					_runner.StopCoroutine(_asyncRunHandle);
 					_asyncRunHandle = null;
 					yield break;
 				}
+
+				// æ‰§è¡Œå®Œåœæ­¢
+				if (_waitStop)
+				{
+					yield break;
+				}
 			}
 
-			// È«²¿Ö´ĞĞ³É¹¦
+			// å…¨éƒ¨æ‰§è¡ŒæˆåŠŸ
 			_ctx.status = TaskStatus.Success;
+			OnTaskRunEnd?.Invoke(_ctx.status);
 			_runner.StopCoroutine(_asyncRunHandle);
 			_asyncRunHandle = null;
 		}

@@ -7,12 +7,12 @@ using UnityEngine;
 
 namespace RuAI
 {
-	public abstract class Condition : ScriptableObject, IAICondition
+	public abstract class ScriptableCondition : ScriptableObject, IAICondition
 	{
 		public abstract bool IsTrue (Dictionary<string, WorldSensor> worldSensor);
 	}
 
-	public class AnoCondition : Condition
+	public class AnoCondition : ScriptableCondition
 	{
 		private Func<Dictionary<string, WorldSensor>, bool> _func;
 
