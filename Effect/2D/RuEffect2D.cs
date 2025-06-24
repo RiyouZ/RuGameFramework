@@ -10,8 +10,15 @@ namespace RuGameFramework.Effect
 	public static class RuEffect2D
 	{
 		private static Dictionary<string, IObjectPool<GameObject>> _effectCache = new Dictionary<string, IObjectPool<GameObject>>();
+		private static GameObjectPool.Config _poolConfig;
 
 		private static Transform _effectPool;
+
+		public static void Config (GameObjectPool.Config config)
+		{
+			_poolConfig = config;
+			return;
+		}
 
 		// º”‘ÿÃÿ–ß
 		public static void LoadEffect (string path)
@@ -25,8 +32,8 @@ namespace RuGameFramework.Effect
 			{
 				_effectPool = new GameObject("EffectPool").transform;
 			}
-
-			IObjectPool<GameObject> objPool = new GameObjectPool(path, _effectPool, 2, true);
+		
+			IObjectPool<GameObject> objPool = new GameObjectPool(path, _poolConfig, _effectPool, 2, true);
 			_effectCache.Add(path, objPool);
 		}
 

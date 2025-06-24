@@ -1,24 +1,30 @@
 using RuGameFramework.Assets;
+using RuGameFramework.Core;
 using RuGameFramework.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using RuGameFramework.Mono;
 using UnityEngine;
 
 namespace RuGameFramework.Core
 {
 	public class GameObjectPool : IObjectPool<GameObject>
 	{
-		private const string PoolName = "Pool";
-		private const int MultiExpansion = 2;
+		public struct Config
+		{
+			public MonoBehaviour runner;
+			public IAssetsManager assetsProvider;
+			public ITimeManager timeKeeper;
+		}
+
+		private Config _config;
+
+		private const string POOL_NAME = "Pool";
+		private const int MULTI_EXPANSION = 2;
 		private string _objPath;
 
 		private int _count;
 		private int _capacity;
-
-		private TimerManager _timerMgr;
 
 		private Transform _objPoolTs;
 		private GameObject _prefab;
@@ -29,13 +35,13 @@ namespace RuGameFramework.Core
 		private AutoIdGenerator _autoIdGenerator;
 
 		// TODO 缩容时候的锁
-		private bool _checkLock;
+		private bool _shrinkLock;
 		private bool _isPreload;
 		public bool IsPreload => _isPreload;
 
-		private Timer _checkTimer;
+		private IRuTimer _checkTimer;
 		private float _timeSimple;
-		
+
 		// 加载句柄
 		private static Dictionary<int, Coroutine> _asyncLoadHandleDic;
 
@@ -60,20 +66,22 @@ namespace RuGameFramework.Core
 			}
 		}
 
-		public GameObjectPool (GameObject prefab, Transform parent = null, int capacity = 2, bool canShrink = false, float timeSimple = 0.3f, float updateShrinkTime = 10f)
+		public GameObjectPool (GameObject prefab, Config config, Transform parent = null, int capacity = 2, bool canShrink = false, float timeSimple = 0.3f, float updateShrinkTime = 120f)
 		{
+			_config.runner = config.runner;
+			_config.assetsProvider = config.assetsProvider;
+
 			_prefab = prefab;
 			_autoIdGenerator = new AutoIdGenerator(0);
-			_checkLock = false;
+			_shrinkLock = false;
 			_capacity = capacity;
 			_count = 0;
 			_freeList = new List<GameObject>(_capacity);
-			
 			_isPreload = true;
-			
+
 			if (parent == null)
 			{
-				string poolName = String.Format("{0}_{1}", prefab.name, PoolName);
+				string poolName = String.Format("{0}_{1}", prefab.name, POOL_NAME);
 				_objPoolTs = new GameObject(poolName).transform;
 			}
 			else
@@ -99,18 +107,22 @@ namespace RuGameFramework.Core
 			_updateShrinkTime = updateShrinkTime;
 			_shrinkTime = updateShrinkTime;
 			_timeSimple = timeSimple;
+			_config.timeKeeper = config.timeKeeper;
 
 			// 缩容计时
-			_timerMgr = App.Instance.TimerManager;
-			_checkTimer = _timerMgr.SetInterval(Update, _timeSimple, 0);
+			_checkTimer = _config.timeKeeper.SetInterval(Update, _timeSimple, 0);
 
 		}
-		
-		public GameObjectPool(string objPath, Transform parent = null, int capacity = 2, bool canShrink = false, float timeSimple = 0.3f, float updateShrinkTime = 10f)
+
+		public GameObjectPool (string objPath, Config config, Transform parent = null, int capacity = 2, bool canShrink = false, float timeSimple = 0.3f, float updateShrinkTime = 120f)
 		{
+			_config.runner = config.runner;
+			_config.assetsProvider = config.assetsProvider;
+			_config.timeKeeper = config.timeKeeper;
+
 			_objPath = objPath;
 			_autoIdGenerator = new AutoIdGenerator(0);
-			_checkLock = false;
+			_shrinkLock = false;
 			_capacity = capacity;
 			_count = 0;
 			_freeList = new List<GameObject>(_capacity);
@@ -119,7 +131,8 @@ namespace RuGameFramework.Core
 
 			if (parent == null)
 			{
-				_objPoolTs = new GameObject(PoolName).transform;
+				string poolName = String.Format("{0}_{1}", objPath, POOL_NAME);
+				_objPoolTs = new GameObject(poolName).transform;
 			}
 			else
 			{
@@ -133,8 +146,9 @@ namespace RuGameFramework.Core
 				{
 					_collAction?.Invoke(obj);
 					_freeList.Add(obj);
-					
+
 					_count++;
+
 					// 预加载完毕
 					if (_count == _capacity)
 					{
@@ -142,21 +156,6 @@ namespace RuGameFramework.Core
 					}
 				});
 			}
-			
-			// AssetsManager.LoadAsset<GameObject>(_objPath, (prefab) =>
-			// {
-			// 	_prefab = prefab;
-			//
-			// 	for (int i = 0; i < _capacity; i++)
-			// 	{
-			// 		int autoId = _autoIdGenerator.GetAutoId();
-			// 		var obj = CreateObj(autoId, _prefab);					
-			// 		_collAction?.Invoke(obj);
-			// 		_freeList.Add(obj);
-			// 	}
-			// 	_count = _freeList.Count;
-			// 	_isPreload = true;
-			// });
 
 			if (!canShrink)
 			{
@@ -168,8 +167,7 @@ namespace RuGameFramework.Core
 			_timeSimple = timeSimple;
 
 			// 缩容计时
-			_timerMgr = App.Instance.TimerManager;
-			_checkTimer = _timerMgr.SetInterval(Update, _timeSimple, 0);
+			_checkTimer = _config.timeKeeper.SetInterval(Update, _timeSimple, 0);
 		}
 
 		private void Update (float deltaTime)
@@ -201,7 +199,7 @@ namespace RuGameFramework.Core
 
 			foreach (var obj in _freeList)
 			{
-				AssetsManager.Destroy(obj);
+				_config.assetsProvider.Destroy(obj);
 			}
 
 			_freeList.Clear();
@@ -215,37 +213,51 @@ namespace RuGameFramework.Core
 
 		public IEnumerator WaitPoolLoad ()
 		{
-			while(!IsPreload) yield return null;
+			float time = Time.time;
+			while (!IsPreload)
+			{
+				if (Time.time - time > 10f)
+				{
+#if UNITY_EDITOR
+					Debug.LogError($"[{_objPath} Pool.Load] Timeout !");
+#endif
+					yield break;
+				}
+				yield return null;
+			}
 		}
 
 		public GameObject Spawn ()
 		{
 			if (!_isPreload)
 			{
+#if UNITY_EDITOR
+				Debug.LogWarning($"[GameObjectPool.Spawn] The Pool Is Not Preloaded");
+#endif
 				return null;
 			}
 
 			_updateShrinkTime = _shrinkTime;
-			
+
 			GameObject obj = null;
 			if (_count <= 0)
 			{
 				int preCapacity = _capacity;
-				_capacity = Mathf.Max(1, _capacity * MultiExpansion);
+				_capacity = Mathf.Max(1, _capacity * MULTI_EXPANSION);
 
 				for (int i = preCapacity; i < _capacity; i++)
 				{
 					int autoId = _autoIdGenerator.GetAutoId();
 					GameObject newObj = null;
 					if (_isNotAssetLoad)
-					{	
+					{
 						newObj = CreateObjNotCounter(autoId, _prefab);
 					}
 					else
 					{
 						newObj = CreateObj(autoId, _objPath);
 					}
-					
+
 					_freeList.Add(newObj);
 					_count++;
 				}
@@ -263,23 +275,32 @@ namespace RuGameFramework.Core
 		// 2倍缩容
 		public void Shrink ()
 		{
-			if (_count <=  _capacity / MultiExpansion)
+			if (!IsPreload)
 			{
 				return;
 			}
 
-			_capacity = (int) _capacity / MultiExpansion;
+			if (_count <= _capacity / MULTI_EXPANSION)
+			{
+				return;
+			}
+
+			_shrinkLock = true;
+
+			_capacity = (int)_capacity / MULTI_EXPANSION;
 
 			int shrinkCount = 0;
-			int shrinkIndex = _count / MultiExpansion;
+			int shrinkIndex = _count / MULTI_EXPANSION;
 			for (int i = _freeList.Count - 1; i >= shrinkIndex; i--)
 			{
 				//  计数销毁
-				AssetsManager.Destroy(_freeList[i]);
+				_config.assetsProvider.Destroy(_freeList[i]);
 				shrinkCount++;
 			}
 			_freeList.RemoveRange(shrinkIndex, shrinkCount);
 			_count = _freeList.Count;
+
+			_shrinkLock = false;
 		}
 
 		// 根据Prefab创建 不计数 不经过AssetsManager
@@ -293,12 +314,12 @@ namespace RuGameFramework.Core
 			return obj;
 		}
 
-		private GameObject CreateObj(int autoId, string prefab)
+		private GameObject CreateObj (int autoId, string prefab)
 		{
-			var obj = AssetsManager.Instantiate(prefab);
+			var obj = _config.assetsProvider.Instantiate(prefab);
 			obj.name = String.Format("{0}_{1}", prefab, autoId);
-			obj.SetActive(false);
 			obj.transform.parent = _objPoolTs;
+			obj.SetActive(false);
 
 			return obj;
 		}
@@ -306,24 +327,38 @@ namespace RuGameFramework.Core
 		private void CreateObjAsync (int autoId, string prefab, Action<GameObject> onCreate)
 		{
 			GameObject obj = null;
-			
+
 			if (!_asyncLoadHandleDic.ContainsKey(autoId))
 			{
 				_asyncLoadHandleDic.Add(autoId, null);
 			}
-			
-			//  计数实例化
-			_asyncLoadHandleDic[autoId] = App.Instance.StartCoroutine(AssetsManager.AsyncInstantiate(_objPath, (gameObject) =>
+
+			if (_asyncLoadHandleDic[autoId] != null)
 			{
+				_config.runner.StopCoroutine(_asyncLoadHandleDic[autoId]);
+				_asyncLoadHandleDic[autoId] = null;
+			}
+
+			//  计数实例化
+			_asyncLoadHandleDic[autoId] = _config.runner.StartCoroutine(_config.assetsProvider.AsyncInstantiate(_objPath, (gameObject) =>
+			{
+				if (gameObject == null)
+				{
+#if UNITY_EDITOR
+					Debug.LogWarning($"[GameObjectPool.CreateObjAsync] {_objPath} AsyncInstantiate Fail");
+#endif
+					return;
+				}
+
 				gameObject.name = String.Format("{0}_{1}", prefab, autoId);
 				gameObject.SetActive(false);
 				gameObject.transform.parent = _objPoolTs;
-				
+
 				onCreate?.Invoke(gameObject);
-				
+
 				if (_asyncLoadHandleDic[autoId] != null)
 				{
-					App.Instance.StopCoroutine(_asyncLoadHandleDic[autoId]);
+					_config.runner.StopCoroutine(_asyncLoadHandleDic[autoId]);
 					_asyncLoadHandleDic[autoId] = null;
 				}
 			}));

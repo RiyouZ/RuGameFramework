@@ -20,7 +20,7 @@ public class RuUI
 		public Canvas canvas;
 		public int uiOrder;
 
-		public CanvasLayerInfo()
+		public CanvasLayerInfo ()
 		{
 			canvas = null;
 			uiOrder = 0;
@@ -28,51 +28,46 @@ public class RuUI
 	}
 
 	private static Dictionary<string, CanvasLayerInfo> _canvasLayerMapping = new Dictionary<string, CanvasLayerInfo>
-		{	
+		{
 			{UISortLayer.Scene, new CanvasLayerInfo()},
 			{UISortLayer.Hud, new CanvasLayerInfo()},
 			{UISortLayer.Window, new CanvasLayerInfo()},
 			{UISortLayer.Effect, new CanvasLayerInfo()},
-			{UISortLayer.Cursor, new CanvasLayerInfo()}
+			{UISortLayer.Cursor, new CanvasLayerInfo()},
 		};
-	
-	// 各个层级的父节点
-	private static Canvas _hudCanvas;
-	private static Canvas _sceneCanvas;
-	private static Canvas _windowCanvas;
-	private static Canvas _effectCanvas;
-	private static Canvas _cursorCanvas;
-	private static Canvas _loadCanvas;
-
-	// 各个层级当前的UIOrder
-	private static int _hudOrder = 0;
-	private static int _sceneOrder = 0;
-	private static int _windowOrder = 0;
-	private static int _effectOrder = 0;
-	private static int _cursorOrder = 0;
 
 	// UI渲染相机
 	private static Camera _uiCamera;
+	public static Camera UICamera => _uiCamera;
 
 	// 同时加载的Canvas数量
 	private static int _multiLoad;
 	private static Dictionary<string, Coroutine> _asyncLoadHandleDic;
-	
+
 	// 加载适配器
 	private static IAsyncAssetLoadAdapter _loadAdapter;
 
-	public static void CreateGameUI(IAsyncAssetLoadAdapter assetLoadAdapter, string gameUIPath, Action<GameObject> onCreate = null, int multiLoad = 2)
+	private static Vector2 _originArchorPos;
+	private static Vector2 _originSizeDelta;
+	private static Vector2 _originPivot;
+	private static Vector2 _originArchorMax;
+	private static Vector2 _originArchorMin;
+	private static Vector3 _originLoacalPos;
+	private static Vector3 _originLoacalScale;
+
+
+	public static void CreateGameUI (IAsyncAssetLoadAdapter assetLoadAdapter, string gameUIPath, Action<GameObject> onCreate = null, int multiLoad = 2)
 	{
 		if (assetLoadAdapter == null)
 		{
 			return;
 		}
-		
+
 		if (_loadAdapter == null)
 		{
 			_loadAdapter = assetLoadAdapter;
 		}
-		
+
 		_canvasStk = new Stack<IRuCanvas>(DefaultCapacity);
 		_canvasCache = new Dictionary<string, IRuCanvas>(DefaultCapacity);
 		_multiLoad = multiLoad;
@@ -97,18 +92,16 @@ public class RuUI
 			}
 		});
 	}
-	
+
 	private static void OnCreateGameUI (GameObject gameUIObj, Action<GameObject> onCreate = null)
 	{
 		var gameUITs = gameUIObj.GetComponent<Transform>();
 		gameUITs.name = "GameUI";
 
-		_canvasLayerMapping[UISortLayer.Hud].canvas = gameUITs.Find("HUD").GetComponent<Canvas>();
-		_canvasLayerMapping[UISortLayer.Scene].canvas = gameUITs.Find("Scene").GetComponent<Canvas>();
-		_canvasLayerMapping[UISortLayer.Window].canvas = gameUITs.Find("Window").GetComponent<Canvas>();
-		_canvasLayerMapping[UISortLayer.Effect].canvas = gameUITs.Find("Effect").GetComponent<Canvas>();
-		_canvasLayerMapping[UISortLayer.Cursor].canvas = gameUITs.Find("Cursor").GetComponent<Canvas>();
-		_loadCanvas = gameUITs.Find("Loading").GetComponent<Canvas>();
+		_canvasLayerMapping["Scene"].canvas = gameUITs.Find("Scene").GetComponent<Canvas>();
+		_canvasLayerMapping["UI"].canvas = gameUITs.Find("UI").GetComponent<Canvas>();
+		_canvasLayerMapping["Cursor"].canvas = gameUITs.Find("Cursor").GetComponent<Canvas>();
+
 		_uiCamera = gameUITs.Find("UICamera").GetComponent<Camera>();
 
 		onCreate?.Invoke(gameUIObj);
@@ -132,27 +125,37 @@ public class RuUI
 		{
 			_asyncLoadHandleDic.Add(uiPath, null);
 		}
-		
+
 		Transform parentTs = null;
 		if (uiLayer != null)
 		{
 			parentTs = GetUIParentByUILayer(uiLayer);
 		}
-		
+
 		_asyncLoadHandleDic[uiPath] = _loadAdapter.AsyncLoadPrefab(uiPath, (prefab) =>
 		{
 			//  实例引用计数
 			GameObject canvas = prefab;
-			
+
 			var canvasCom = canvas.GetComponent<IRuCanvas>();
 			if (canvasCom == null)
 			{
 				return;
 			}
-			
+
+			// 设置Parent
+
+			if (canvas.transform.parent == null)
+			{
+				var rectTs = canvas.GetComponent<RectTransform>();
+				SaveRect(rectTs);
+				canvas.transform.SetParent(parentTs);
+				LoadRect(rectTs);
+			}
+
 			OnCanvasLoad(canvasCom, uiPath, uiLayer);
 			onShow(canvasCom);
-			
+
 			if (_asyncLoadHandleDic != null)
 			{
 				_loadAdapter.StopCoroutine(_asyncLoadHandleDic[uiPath]);
@@ -160,6 +163,28 @@ public class RuUI
 			}
 			// 为了与Prefab一致 实例化时就需要设置parent
 		}, parentTs);
+	}
+
+	private static void SaveRect (RectTransform rect)
+	{
+		_originArchorPos = rect.anchoredPosition;
+		_originArchorMax = rect.anchorMax;
+		_originArchorMin = rect.anchorMin;
+		_originPivot = rect.pivot;
+		_originSizeDelta = rect.sizeDelta;
+		_originLoacalPos = rect.localPosition;
+		_originLoacalScale = rect.lossyScale;
+	}
+
+	private static void LoadRect (RectTransform rect)
+	{
+		rect.anchoredPosition = _originArchorPos;
+		rect.anchorMax = _originArchorMax;
+		rect.anchorMin = _originArchorMin;
+		rect.pivot = _originPivot;
+		rect.sizeDelta = _originSizeDelta;
+		rect.localPosition = _originLoacalPos;
+		rect.localScale = _originLoacalScale;
 	}
 
 	public static void ShowCanvas (IRuCanvas ruCanvas)
@@ -220,7 +245,7 @@ public class RuUI
 		{
 			return;
 		}
-		
+
 		// 栈顶的Canvas可以互动
 		canvas.IsInteractable = true;
 		if (_canvasStk.Count > 0)
@@ -286,7 +311,7 @@ public class RuUI
 
 		string layer = canvas.UILayer;
 		Transform canvasTs = canvas.CanvasTs;
-		
+
 		if (canvasTs == null)
 		{
 			return;
@@ -341,7 +366,7 @@ public class RuUI
 		}
 
 		canvasInfo.uiOrder++;
-		
+
 		return canvasInfo.uiOrder;
 	}
 
@@ -351,7 +376,7 @@ public class RuUI
 		{
 			return;
 		}
-		
+
 		if (!_canvasLayerMapping.TryGetValue(uiLayer, out var canvasInfo))
 		{
 #if UNITY_EDITOR
@@ -372,11 +397,11 @@ public class RuUI
 		foreach (var canvas in _canvasCache.Values)
 		{
 			canvas.UIDestory();
-			AssetsManager.Destroy(canvas.UIGameObject);
+			_loadAdapter.Destroy(canvas.UIGameObject);
 		}
 		_canvasCache.Clear();
 	}
-	
+
 	// 隐藏UI
 	public static void HideCanvas (string canvasPath, bool isFast = false)
 	{
@@ -387,7 +412,7 @@ public class RuUI
 
 		// 没有打开的 canvas
 		var topCanvas = _canvasStk.Peek();
-		if (topCanvas == canvas )
+		if (topCanvas == canvas)
 		{
 			CloseTopCanvas(isFast);
 			return;
@@ -406,14 +431,14 @@ public class RuUI
 	}
 
 	// 隐藏UI处理
-	private static void HideCanvasHandle (IRuCanvas canvas, bool  isFast = false)
+	private static void HideCanvasHandle (IRuCanvas canvas, bool isFast = false)
 	{
 		if (!isFast)
 		{
 			canvas.Hide();
 			RemoveCanvasCache(canvas.CanvasPath);
 			// 释放Canvas
-			AssetsManager.Destroy(canvas.UIGameObject);
+			_loadAdapter.Destroy(canvas.UIGameObject);
 		}
 		else
 		{

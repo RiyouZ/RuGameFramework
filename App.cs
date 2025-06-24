@@ -39,6 +39,8 @@ namespace RuGameFramework
 		private SceneManager _sceneManager;
 		public SceneManager SceneManager => _sceneManager;
 
+		public AAssetsProxy AssetProxy = new AAssetsProxy();
+
 		private Dictionary<int, GameObject> _dontDestroyDic = new Dictionary<int, GameObject>(8);
 
 		private Timer timer;
