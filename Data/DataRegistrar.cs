@@ -1,3 +1,4 @@
+using RuGameFramework.Core;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,7 +12,9 @@ namespace RuGameFramework.Data
 		private static int DefaultCapacity = 16;
 		private static Dictionary<Type, IRuData> _dataDic = new Dictionary<Type, IRuData>(DefaultCapacity);
 
-		public static void RegisterData (Type dataType)
+		private static Dictionary<Type, IObjectPool<IRuData>> _multiDataMap = new Dictionary<Type, IObjectPool<IRuData>>(DefaultCapacity); 
+
+		public static void RegisterDataSingle (Type dataType)
 		{
 			if (_dataDic.TryGetValue(dataType, out IRuData data))
 			{
@@ -24,7 +27,7 @@ namespace RuGameFramework.Data
 			_dataDic.Add(dataType, ruData);
 		}
 
-		public static void RegisterDataLazy (Type dataType)
+		public static void RegisterDataSingleLazy (Type dataType)
 		{
 			if (_dataDic.TryGetValue(dataType, out IRuData data))
 			{
@@ -34,23 +37,23 @@ namespace RuGameFramework.Data
 			_dataDic.Add(dataType, null);
 		}
 
-		public static void RegisterData<T> (bool isLazy = false) where T : IRuData
+		public static void RegisterDataSingle<T> (bool isLazy = false) where T : IRuData
 		{
 			if (!isLazy)
 			{
-				RegisterData(typeof(T));
+				RegisterDataSingle(typeof(T));
 				return;
 			}
 
-			RegisterDataLazy(typeof(T));
+			RegisterDataSingleLazy(typeof(T));
 		}
 
-		public static void UnRegisterData<T> () where T : IRuData
+		public static void UnRegisterDataSingle<T> () where T : IRuData
 		{
-			UnRegisterData(typeof(T));
+			UnRegisterDataSingle(typeof(T));
 		}
 
-		public static void UnRegisterData (Type dataType)
+		public static void UnRegisterDataSingle (Type dataType)
 		{
 			if (!_dataDic.TryGetValue(dataType, out IRuData data))
 			{
@@ -59,7 +62,7 @@ namespace RuGameFramework.Data
 			_dataDic.Remove(dataType);
 		}
 
-		public static IRuData GetData (Type dataType)
+		public static IRuData GetDataSingle (Type dataType)
 		{
 			if (!_dataDic.TryGetValue(dataType, out IRuData data))
 			{
@@ -76,12 +79,12 @@ namespace RuGameFramework.Data
 		{
 			if (!isLazy)
 			{
-				return GetData(typeof(T)) as T;
+				return GetDataSingle(typeof(T)) as T;
 			}
-			return GetDataLazy(typeof(T)) as T;
+			return GetDataSingleLazy(typeof(T)) as T;
 		}
 
-		public static IRuData GetDataLazy (Type dataType)
+		public static IRuData GetDataSingleLazy (Type dataType)
 		{
 			if (!_dataDic.TryGetValue(dataType, out IRuData data))
 			{
@@ -112,7 +115,7 @@ namespace RuGameFramework.Data
 
 		public static IRuData GetClone (Type dataType)
 		{
-			var data = GetData(dataType);
+			var data = GetDataSingle(dataType);
 			if (data == null)
 			{
 				return null;
@@ -123,7 +126,7 @@ namespace RuGameFramework.Data
 
 		public static IRuData GetCloneLazy (Type dataType)
 		{
-			var data = GetDataLazy(dataType);
+			var data = GetDataSingleLazy(dataType);
 			if (data == null)
 			{
 				return null;

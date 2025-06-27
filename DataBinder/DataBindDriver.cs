@@ -39,7 +39,7 @@ namespace RuGameFramework.DataBind
 				}
 				
 				// 获取绑定的数据
-				var data = DataRegistrar.GetData(attr.TargetType);
+				var data = DataRegistrar.GetDataSingle(attr.TargetType);
 				if (data == null)
 				{
 					continue;
@@ -97,7 +97,7 @@ namespace RuGameFramework.DataBind
 				}
 
 				// 获取绑定的数据
-				var data = DataRegistrar.GetData(attr.TargetType);
+				var data = DataRegistrar.GetDataSingle(attr.TargetType);
 				if (data == null)
 				{
 					continue;

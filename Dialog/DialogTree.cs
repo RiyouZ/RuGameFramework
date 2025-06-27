@@ -1,4 +1,5 @@
 using RuDialog.Node;
+using Sirenix.OdinInspector;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,17 +8,27 @@ using UnityEngine;
 namespace RuDialog
 {
 	[CreateAssetMenu(fileName = "DialogTree", menuName = "Dialog / DialogTree")]
-	public class DialogTree : ScriptableObject
+	public class DialogTree : SerializedScriptableObject
 	{
 		public string treeName;
-		public BaseDialogNode currentNode;
+		
+		[ShowInInspector] private BaseDialogNode _currentNode;
+
+		public BaseDialogNode CurrentNode
+		{
+			get
+			{
+				return _currentNode;
+			}
+		}
+		[InlineEditor]
 		public BaseDialogNode rootNode;
 
 		public static DialogTree Create (BaseDialogNode root)
 		{
 			DialogTree tree = CreateInstance<DialogTree>();
 			tree.rootNode = root;
-			tree.currentNode = root;
+			tree._currentNode = root;
 			return tree;
 		}
 
@@ -27,7 +38,7 @@ namespace RuDialog
 			var cloneTree = CreateInstance<DialogTree>();
 			cloneTree.rootNode = cloneRoot;
 			cloneTree.name = treeName;
-			cloneTree.currentNode = cloneRoot;
+			cloneTree._currentNode = cloneRoot;
 			return cloneTree;
 		}
 
@@ -51,12 +62,12 @@ namespace RuDialog
 
 		public IEnumerator Execute (DialogContext ctx)
 		{
-			yield return currentNode.Execute(ctx);
+			yield return _currentNode.Execute(ctx);
 		}		
 
 		public void NextStep ()
 		{
-			currentNode = currentNode.GetNextNode() as BaseDialogNode;
+			_currentNode = _currentNode.GetNextNode() as BaseDialogNode;
 		}
 	}
 

@@ -11,6 +11,7 @@ namespace RuDialog
 	public static class DialogManager
 	{
 		private static InteractDialogHandler _interactHandler = new InteractDialogHandler();
+		private static StoryDialogHandler _storyHandler = new StoryDialogHandler();
 
 		private static IDialogTreeSelector _selector;
 
@@ -52,6 +53,13 @@ namespace RuDialog
 			_interactHandler.OnDialogStart = onStart;
 			_interactHandler.OnDialogEnd = onEnd;
 			_interactHandler.StartDialog(runner, ctx, dialogActorList);
+		}
+
+		public static void StartStory (MonoBehaviour runner, DialogContext ctx, DialogTree tree, Action<BaseDialogNode> onStart = null, Action<BaseDialogNode> onEnd = null)
+		{
+			_storyHandler.OnStoryStart = onStart;
+			_storyHandler.OnStoryEnd = onEnd;
+			_storyHandler.StartStory(runner, ctx, tree);
 		}
 
 

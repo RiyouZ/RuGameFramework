@@ -195,12 +195,12 @@ namespace RuGameFramework
 
 		private void RegisterData ()
 		{
-			Data.DataRegistrar.RegisterData<PlayerData>();
+			Data.DataRegistrar.RegisterDataSingle<PlayerData>();
 		}
 
 		private void UnRegisterData ()
 		{
-			Data.DataRegistrar.UnRegisterData<PlayerData>();
+			Data.DataRegistrar.UnRegisterDataSingle<PlayerData>();
 		}
 
 		public void AddDontDestroyList (GameObject obj)

@@ -61,7 +61,7 @@ namespace RuDialog
 			while (globalCtx.curActor != null || !_isInteracting)
 			{
 				// 交互式对话 谁执行 谁就是actor
-				curActor.Tree.currentNode.GameObject = curActor.gameObject;
+				curActor.Tree.CurrentNode.GameObject = curActor.gameObject;
 				yield return curActor.Tree.Execute(ctx);
 				curActor.Tree.NextStep();
 
@@ -124,7 +124,7 @@ namespace RuDialog
 				}
 
 				// 当前遍历完毕
-				if (_currentDialogActorList[speakIndex].Tree.currentNode == null)
+				if (_currentDialogActorList[speakIndex].Tree.CurrentNode == null)
 				{
 					bitSpeakEnd &= ~( 1L << speakIndex );
 				}
@@ -132,7 +132,7 @@ namespace RuDialog
 				{
 					// 交互式对话 谁执行 谁就是actor
 					var currentActor = _currentDialogActorList[speakIndex];
-					currentActor.Tree.currentNode.GameObject = currentActor.ActorObject;
+					currentActor.Tree.CurrentNode.GameObject = currentActor.ActorObject;
 
 					yield return currentActor.Tree.Execute(ctx);
 					currentActor.Tree.NextStep();

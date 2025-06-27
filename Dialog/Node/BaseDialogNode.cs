@@ -1,4 +1,6 @@
 using RuDialog.Node;
+using Sirenix.OdinInspector;
+using Sirenix.Serialization;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,25 +9,27 @@ using UnityEngine;
 
 namespace RuDialog
 {
-	public abstract class BaseDialogNode : ScriptableObject, IDialogNode<BaseDialogNode>
+	public abstract class BaseDialogNode : SerializedScriptableObject, IDialogNode<BaseDialogNode>
 	{
 		public string nodeName;
 
-		[SerializeField] private GameObject _gameObject;
+		[OdinSerialize] private GameObject _gameObject;
 		public GameObject GameObject
 		{
 			get => _gameObject; 
 			set => _gameObject = value;
 		}
 
-		private BaseDialogNode _parent;
+		[InlineEditor]
+		[OdinSerialize]	private BaseDialogNode _parent;
 		public BaseDialogNode Parent
 		{
 			get => _parent; 
 			set => _parent = value;
 		}
 
-		[SerializeField] private List<BaseDialogNode> _childs;
+		[InlineEditor]
+		[OdinSerialize] private List<BaseDialogNode> _childs;
 		public List<BaseDialogNode> Childs
 		{
 			get => _childs;

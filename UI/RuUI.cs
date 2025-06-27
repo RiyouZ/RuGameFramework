@@ -98,11 +98,17 @@ public class RuUI
 		var gameUITs = gameUIObj.GetComponent<Transform>();
 		gameUITs.name = "GameUI";
 
-		_canvasLayerMapping["Scene"].canvas = gameUITs.Find("Scene").GetComponent<Canvas>();
-		_canvasLayerMapping["UI"].canvas = gameUITs.Find("UI").GetComponent<Canvas>();
-		_canvasLayerMapping["Cursor"].canvas = gameUITs.Find("Cursor").GetComponent<Canvas>();
+		_canvasLayerMapping[UISortLayer.Scene].canvas = gameUITs.Find(UISortLayer.Scene).GetComponent<Canvas>();
+		_canvasLayerMapping[UISortLayer.Hud].canvas = gameUITs.Find(UISortLayer.Hud).GetComponent<Canvas>();
+		_canvasLayerMapping[UISortLayer.Window].canvas = gameUITs.Find(UISortLayer.Window).GetComponent<Canvas>();
 
 		_uiCamera = gameUITs.Find("UICamera").GetComponent<Camera>();
+
+		InitUICameraHandle(_uiCamera);
+
+		InitCanvasHandle(_canvasLayerMapping[UISortLayer.Scene].canvas);
+		InitCanvasHandle(_canvasLayerMapping[UISortLayer.Hud].canvas);
+		InitCanvasHandle(_canvasLayerMapping[UISortLayer.Window].canvas);
 
 		onCreate?.Invoke(gameUIObj);
 	}
@@ -230,6 +236,13 @@ public class RuUI
 		MarkCanvasOpen(ruCanvas);
 		// 第一次打开
 		ruCanvas.Show();
+	}
+
+	private static void InitUICameraHandle (Camera camera)
+	{
+		camera.clearFlags = CameraClearFlags.Depth;
+		camera.cullingMask = LayerMask.NameToLayer("UI");
+		camera.depth = 10;
 	}
 
 	private static void InitCanvasHandle (Canvas canvas)
