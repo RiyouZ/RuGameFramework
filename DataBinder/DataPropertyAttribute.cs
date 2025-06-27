@@ -8,10 +8,10 @@ namespace RuGameFramework.DataBind
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
 	public sealed class DataPropertyAttribute :  Attribute
 	{
-		// °ó¶¨ÀàµÄÂ·¾¶
+		// ç»‘å®šç±»çš„è·¯å¾„
 		private Type _targetType;
 		public Type TargetType => _targetType;
-		// Ðè°ó¶¨µÄÊôÐÔ
+		// éœ€ç»‘å®šçš„å±žæ€§
 		private string _field;
 		public string Field => _field;
 

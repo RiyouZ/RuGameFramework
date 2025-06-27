@@ -46,7 +46,7 @@ namespace RuGameFramework.DataBind
 					BindToImg(image);
 					break;
 				default:
-					Debug.LogError("没有可绑定的UI类型");
+					Debug.LogError("娌℃湁鍙粦瀹氱殑UI绫诲瀷");
 					return;
 			}
 		}

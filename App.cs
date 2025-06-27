@@ -36,8 +36,8 @@ namespace RuGameFramework
 		private TimerManager _timerManager;
 		public TimerManager TimerManager => _timerManager;
 
-		private SceneManager _sceneManager;
-		public SceneManager SceneManager => _sceneManager;
+		private AASceneManager _sceneManager;
+		public AASceneManager SceneManager => _sceneManager;
 
 		public AAssetsProxy AssetProxy = new AAssetsProxy();
 
@@ -161,7 +161,7 @@ namespace RuGameFramework
 
 			if (_sceneManager == null)
 			{
-				_sceneManager = gameObject.AddComponent<SceneManager>();
+				_sceneManager = gameObject.AddComponent<AASceneManager>();
 				_sceneManager.SetDefaultScene("Start");
 			}
 

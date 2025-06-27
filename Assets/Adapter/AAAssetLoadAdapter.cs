@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -21,7 +20,7 @@ namespace  RuGameFramework.Assets
 			return _runner.StartCoroutine(AssetsManager.LoadAsset<T>(assetName, onComplate, onFail));
 		}
 
-		public Coroutine AsyncLoadPrefab(string assetName, Action<GameObject> onComplate, Transform parent = null)
+		public Coroutine AsyncInstantiate(string assetName, Action<GameObject> onComplate, Transform parent = null)
 		{
 			return _runner.StartCoroutine(AssetsManager.AsyncInstantiate(assetName, onComplate, parent));
 		}
@@ -29,6 +28,16 @@ namespace  RuGameFramework.Assets
 		public void Destroy (GameObject prefab)
 		{
 			AssetsManager.Destroy(prefab);
+		}
+
+		public GameObject Instantiate (string prefab)
+		{
+			return AssetsManager.Instantiate(prefab);
+		}
+
+		public void Release (UnityEngine.Object asset)
+		{
+			AssetsManager.Release(asset);
 		}
 
 		public void StopCoroutine(Coroutine coroutine)

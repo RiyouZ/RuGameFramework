@@ -82,7 +82,7 @@ public class RuUI
 			_asyncLoadHandleDic.Add(gameUIPath, null);
 		}
 
-		_asyncLoadHandleDic[gameUIPath] = _loadAdapter.AsyncLoadPrefab(gameUIPath, (gameUIObj) =>
+		_asyncLoadHandleDic[gameUIPath] = _loadAdapter.AsyncInstantiate(gameUIPath, (gameUIObj) =>
 		{
 			OnCreateGameUI(gameUIObj, onCreate);
 			if (_asyncLoadHandleDic != null)
@@ -132,7 +132,7 @@ public class RuUI
 			parentTs = GetUIParentByUILayer(uiLayer);
 		}
 
-		_asyncLoadHandleDic[uiPath] = _loadAdapter.AsyncLoadPrefab(uiPath, (prefab) =>
+		_asyncLoadHandleDic[uiPath] = _loadAdapter.AsyncInstantiate(uiPath, (prefab) =>
 		{
 			//  实例引用计数
 			GameObject canvas = prefab;

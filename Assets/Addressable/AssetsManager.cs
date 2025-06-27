@@ -209,6 +209,13 @@ namespace RuGameFramework.Assets
 			// 场景卸载时会自动调用 UnloadUnused
 		}
 
+		public static void Release (UnityEngine.Object asset)
+		{
+			Addressables.Release(asset);
+
+			// 场景卸载时会自动调用 UnloadUnused
+		}
+
 		// 释放未使用的资源
 		public static void ReleaseUnusedPrefabs ()
 		{

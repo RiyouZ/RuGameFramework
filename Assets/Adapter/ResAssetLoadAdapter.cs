@@ -22,7 +22,7 @@ namespace RuGameFramework.Assets
 			return _runner.StartCoroutine(_resManager.LoadAssets<T>(assetName, onComplate));
 		}
 
-		public Coroutine AsyncLoadPrefab (string assetName, Action<GameObject> onComplate, Transform parent = null)
+		public Coroutine AsyncInstantiate (string assetName, Action<GameObject> onComplate, Transform parent = null)
 		{
 			return _runner.StartCoroutine(_resManager.AsyncInstantiate(assetName, onComplate));
 		}
@@ -32,9 +32,19 @@ namespace RuGameFramework.Assets
 			_resManager.Destroy(prefab);
 		}
 
+		public void Release (UnityEngine.Object asset)
+		{
+			_resManager.UnLoadAssets(asset);
+		}
+
 		public void StopCoroutine (Coroutine coroutine)
 		{
 			_runner.StopCoroutine(coroutine);
+		}
+
+		public GameObject Instantiate (string prefab)
+		{
+			return _resManager.Instantiate(prefab);
 		}
 	}
 

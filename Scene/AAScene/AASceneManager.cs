@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace RuGameFramework.Scene
 {
-	public class SceneManager : MonoBehaviour
+	public class AASceneManager : MonoBehaviour
 	{
 		private static int MaxCapacity = 2;
 

@@ -12,8 +12,7 @@ namespace RuGameFramework.Core
 	{
 		public struct Config
 		{
-			public MonoBehaviour runner;
-			public IAssetsManager assetsProvider;
+			public IAsyncAssetLoadAdapter assetsProvider;
 			public ITimeManager timeKeeper;
 		}
 
@@ -68,7 +67,6 @@ namespace RuGameFramework.Core
 
 		public GameObjectPool (GameObject prefab, Config config, Transform parent = null, int capacity = 2, bool canShrink = false, float timeSimple = 0.3f, float updateShrinkTime = 120f)
 		{
-			_config.runner = config.runner;
 			_config.assetsProvider = config.assetsProvider;
 
 			_prefab = prefab;
@@ -116,7 +114,6 @@ namespace RuGameFramework.Core
 
 		public GameObjectPool (string objPath, Config config, Transform parent = null, int capacity = 2, bool canShrink = false, float timeSimple = 0.3f, float updateShrinkTime = 120f)
 		{
-			_config.runner = config.runner;
 			_config.assetsProvider = config.assetsProvider;
 			_config.timeKeeper = config.timeKeeper;
 
@@ -335,12 +332,12 @@ namespace RuGameFramework.Core
 
 			if (_asyncLoadHandleDic[autoId] != null)
 			{
-				_config.runner.StopCoroutine(_asyncLoadHandleDic[autoId]);
+				_config.assetsProvider.StopCoroutine(_asyncLoadHandleDic[autoId]);
 				_asyncLoadHandleDic[autoId] = null;
 			}
 
 			//  计数实例化
-			_asyncLoadHandleDic[autoId] = _config.runner.StartCoroutine(_config.assetsProvider.AsyncInstantiate(_objPath, (gameObject) =>
+			_asyncLoadHandleDic[autoId] = _config.assetsProvider.AsyncInstantiate(_objPath, (gameObject) =>
 			{
 				if (gameObject == null)
 				{
@@ -358,10 +355,10 @@ namespace RuGameFramework.Core
 
 				if (_asyncLoadHandleDic[autoId] != null)
 				{
-					_config.runner.StopCoroutine(_asyncLoadHandleDic[autoId]);
+					_config.assetsProvider.StopCoroutine(_asyncLoadHandleDic[autoId]);
 					_asyncLoadHandleDic[autoId] = null;
 				}
-			}));
+			});
 		}
 	}
 

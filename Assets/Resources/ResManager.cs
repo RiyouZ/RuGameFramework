@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.VersionControl;
 using UnityEngine;
 
 namespace RuGameFramework.Assets
@@ -103,6 +104,11 @@ namespace RuGameFramework.Assets
 			{
 				return;
 			}
+			UnityEngine.Resources.UnloadAsset(asset);
+		}
+
+		public void UnLoadAssets (UnityEngine.Object asset)
+		{
 			UnityEngine.Resources.UnloadAsset(asset);
 		}
 

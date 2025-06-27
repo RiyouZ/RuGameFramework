@@ -27,13 +27,13 @@ namespace RuGameFramework.DataBind
 			}
 		}
 
-		// 绑定驱动控制
+		// 缁戝畾椹卞姩鎺у埗
 		public virtual void Bind (Action<T> onValueChange)
 		{
 			_onValueChange += onValueChange;
 			_onValueChangeRefList.Add(onValueChange);
 		}
-		// 解绑控制
+		// 瑙ｇ粦鎺у埗
 		public virtual void UnBind ()
 		{
 			foreach (var actionRef in _onValueChangeRefList)

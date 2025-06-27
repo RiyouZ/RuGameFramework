@@ -10,12 +10,12 @@ namespace RuGameFramework.DataBind
 		private static BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 		private static Dictionary<Type, IDataDriver> _driverCache = new Dictionary<Type, IDataDriver>();
 
-		// Ö´ĞĞÊı¾İ°ó¶¨
+		// æ‰§è¡Œæ•°æ®ç»‘å®š
 		public static void ExecDataBind (IDataDriver obj)
 		{
 			var type = obj.GetType();
 
-			// ÒÑ°ó¶¨¹ı ÎŞĞèÔÙ´Î°ó¶¨
+			// å·²ç»‘å®šè¿‡ æ— éœ€å†æ¬¡ç»‘å®š
 			if (_driverCache.TryGetValue(type, out IDataDriver driver))
 			{
 				return;
@@ -23,43 +23,43 @@ namespace RuGameFramework.DataBind
 
 			_driverCache.Add(type, obj);
 
-			// »ñÈ¡DriverÖĞµÄ×Ö¶Î
+			// è·å–Driverä¸­çš„å­—æ®µ
 			var fieldList = type.GetFields(flags);
 
 			object[] funcArgs = new object[1];
 
-			// ±éÀúËùÓĞ×Ö¶Î
+			// éå†æ‰€æœ‰å­—æ®µ
 			for (int i = 0; i < fieldList.Length; i++)
 			{
-				// »ñÈ¡×Ö¶ÎµÄÌØĞÔ
+				// è·å–å­—æ®µçš„ç‰¹æ€§
 				var attr = fieldList[i].GetCustomAttribute<DataPropertyAttribute>();
 				if (attr == null)
 				{
 					continue;
 				}
 				
-				// »ñÈ¡°ó¶¨µÄÊı¾İ
+				// è·å–ç»‘å®šçš„æ•°æ®
 				var data = DataRegistrar.GetData(attr.TargetType);
 				if (data == null)
 				{
 					continue;
 				}
 
-				// »ñÈ¡¶ÔÓ¦µÄÊı¾İ×Ö¶Î
+				// è·å–å¯¹åº”çš„æ•°æ®å­—æ®µ
 				FieldInfo field = attr.TargetType.GetField(attr.Field);
 				if (field == null)
 				{
 					continue;
 				}
 
-				// »ñÈ¡DataPropertyÊôĞÔµÄGet
+				// è·å–DataPropertyå±æ€§çš„Get
 				object dataValue = field.GetValue(data);
 				if (dataValue == null)
 				{
 					continue;
 				}
 
-				// »ñÈ¡°ó¶¨µÄ×é¼ş
+				// è·å–ç»‘å®šçš„ç»„ä»¶
 				object comValue = fieldList[i].GetValue(obj);
 				if (comValue == null)
 				{
@@ -72,45 +72,45 @@ namespace RuGameFramework.DataBind
 			}
 		}
 
-		// ½â°ó
+		// è§£ç»‘
 		public static void UnBindData (IDataDriver obj)
 		{
 			var type = obj.GetType();
 
-			// Î´°ó¶¨¹ı ÎŞĞè½â°ó
+			// æœªç»‘å®šè¿‡ æ— éœ€è§£ç»‘
 			if (!_driverCache.TryGetValue(type, out IDataDriver driver))
 			{
 				return;
 			}
 
-			// »ñÈ¡DriverÖĞµÄ×Ö¶Î
+			// è·å–Driverä¸­çš„å­—æ®µ
 			var fieldList = type.GetFields(flags);
 
-			// ±éÀúËùÓĞ×Ö¶Î
+			// éå†æ‰€æœ‰å­—æ®µ
 			for (int i = 0; i < fieldList.Length; i++)
 			{
-				// »ñÈ¡×Ö¶ÎµÄÌØĞÔ
+				// è·å–å­—æ®µçš„ç‰¹æ€§
 				var attr = fieldList[i].GetCustomAttribute<DataPropertyAttribute>();
 				if (attr == null)
 				{
 					continue;
 				}
 
-				// »ñÈ¡°ó¶¨µÄÊı¾İ
+				// è·å–ç»‘å®šçš„æ•°æ®
 				var data = DataRegistrar.GetData(attr.TargetType);
 				if (data == null)
 				{
 					continue;
 				}
 
-				// »ñÈ¡¶ÔÓ¦µÄÊı¾İ×Ö¶Î
+				// è·å–å¯¹åº”çš„æ•°æ®å­—æ®µ
 				FieldInfo field = attr.TargetType.GetField(attr.Field);
 				if (field == null)
 				{
 					continue;
 				}
 
-				// »ñÈ¡DataPropertyÊôĞÔµÄGet
+				// è·å–DataPropertyå±æ€§çš„Get
 				object dataValue = field.GetValue(data);
 				if (dataValue == null)
 				{
